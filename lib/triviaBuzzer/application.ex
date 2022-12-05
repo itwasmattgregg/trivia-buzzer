@@ -9,7 +9,7 @@ defmodule TriviaBuzzer.Application do
   def start(_type, _args) do
     children = [
       # Start the Ecto repository
-      TriviaBuzzer.Repo,
+      # TriviaBuzzer.Repo,
       # Start the Telemetry supervisor
       TriviaBuzzerWeb.Telemetry,
       # Start the PubSub system
