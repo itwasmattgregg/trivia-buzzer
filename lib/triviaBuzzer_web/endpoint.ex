@@ -1,5 +1,5 @@
 defmodule TriviaBuzzerWeb.Endpoint do
-  use Phoenix.Endpoint, otp_app: :triviaBuzzer
+  use Phoenix.Endpoint, otp_app: :trivia_buzzer
 
   # The session will be stored in the cookie and signed,
   # this means its contents can be read but not tampered with.
@@ -18,7 +18,7 @@ defmodule TriviaBuzzerWeb.Endpoint do
   # when deploying your static files in production.
   plug Plug.Static,
     at: "/",
-    from: :triviaBuzzer,
+    from: :trivia_buzzer,
     gzip: false,
     only: ~w(assets fonts images favicon.ico robots.txt)
 
@@ -28,7 +28,7 @@ defmodule TriviaBuzzerWeb.Endpoint do
     socket "/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket
     plug Phoenix.LiveReloader
     plug Phoenix.CodeReloader
-    plug Phoenix.Ecto.CheckRepoStatus, otp_app: :triviaBuzzer
+    plug Phoenix.Ecto.CheckRepoStatus, otp_app: :trivia_buzzer
   end
 
   plug Phoenix.LiveDashboard.RequestLogger,

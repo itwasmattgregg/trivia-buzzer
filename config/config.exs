@@ -7,11 +7,11 @@
 # General application configuration
 import Config
 
-config :triviaBuzzer,
+config :trivia_buzzer,
   ecto_repos: [TriviaBuzzer.Repo]
 
 # Configures the endpoint
-config :triviaBuzzer, TriviaBuzzerWeb.Endpoint,
+config :trivia_buzzer, TriviaBuzzerWeb.Endpoint,
   url: [host: "localhost"],
   render_errors: [view: TriviaBuzzerWeb.ErrorView, accepts: ~w(html json), layout: false],
   pubsub_server: TriviaBuzzer.PubSub,
@@ -24,7 +24,7 @@ config :triviaBuzzer, TriviaBuzzerWeb.Endpoint,
 #
 # For production it's recommended to configure a different adapter
 # at the `config/runtime.exs`.
-config :triviaBuzzer, TriviaBuzzer.Mailer, adapter: Swoosh.Adapters.Local
+config :trivia_buzzer, TriviaBuzzer.Mailer, adapter: Swoosh.Adapters.Local
 
 # Swoosh API client is needed for adapters other than SMTP.
 config :swoosh, :api_client, false

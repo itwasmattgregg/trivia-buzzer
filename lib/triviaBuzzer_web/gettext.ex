@@ -20,5 +20,5 @@ defmodule TriviaBuzzerWeb.Gettext do
 
   See the [Gettext Docs](https://hexdocs.pm/gettext) for detailed usage.
   """
-  use Gettext, otp_app: :triviaBuzzer
+  use Gettext, otp_app: :trivia_buzzer
 end

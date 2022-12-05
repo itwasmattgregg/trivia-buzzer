@@ -5,7 +5,7 @@ import Config
 # The MIX_TEST_PARTITION environment variable can be used
 # to provide built-in test partitioning in CI environment.
 # Run `mix help test` for more information.
-config :triviaBuzzer, TriviaBuzzer.Repo,
+config :trivia_buzzer, TriviaBuzzer.Repo,
   username: "postgres",
   password: "postgres",
   hostname: "localhost",
@@ -15,13 +15,13 @@ config :triviaBuzzer, TriviaBuzzer.Repo,
 
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
-config :triviaBuzzer, TriviaBuzzerWeb.Endpoint,
+config :trivia_buzzer, TriviaBuzzerWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
   secret_key_base: "KgMJx6XW3dbjlOlr2k0PQ7ztCeq5itpRH9EVdDRbiPhZHQQz568M6E/Rn4uIylAW",
   server: false
 
 # In test we don't send emails.
-config :triviaBuzzer, TriviaBuzzer.Mailer, adapter: Swoosh.Adapters.Test
+config :trivia_buzzer, TriviaBuzzer.Mailer, adapter: Swoosh.Adapters.Test
 
 # Print only warnings and errors during test
 config :logger, level: :warn
