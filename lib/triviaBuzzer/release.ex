@@ -9,12 +9,8 @@ defmodule TriviaBuzzer.Release do
     load_app()
   end
 
-  def rollback(repo, version) do
+  def rollback(_, _) do
     load_app()
-  end
-
-  defp repos do
-    Application.fetch_env!(@app, :ecto_repos)
   end
 
   defp load_app do
