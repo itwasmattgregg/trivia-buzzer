@@ -7,9 +7,14 @@ defmodule TriviaBuzzer.Application do
 
   @impl true
   def start(_type, _args) do
+    # Ensure SSL is started before database connections
+    :ssl.start()
+    
     children = [
       # Start the Ecto repository
       TriviaBuzzer.Repo,
+      # Start the cleanup scheduler
+      TriviaBuzzer.Scheduler.CleanupScheduler,
       # Start the Telemetry supervisor
       TriviaBuzzerWeb.Telemetry,
       # Start the PubSub system
@@ -23,6 +28,7 @@ defmodule TriviaBuzzer.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: TriviaBuzzer.Supervisor]
+    
     Supervisor.start_link(children, opts)
   end
 
