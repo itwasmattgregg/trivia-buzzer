@@ -22,6 +22,12 @@ defmodule TriviaBuzzerWeb.Router do
     live "/game/:game_code", PlayerLive
   end
 
+  scope "/", TriviaBuzzerWeb do
+    pipe_through :api
+
+    get "/health", HealthController, :index
+  end
+
   # Other scopes may use custom stacks.
   # scope "/api", TriviaBuzzerWeb do
   #   pipe_through :api
