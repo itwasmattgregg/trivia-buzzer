@@ -24,7 +24,7 @@ defmodule TriviaBuzzerWeb.ButtonLive do
     {:noreply, assign(socket, :clicked, true)}
   end
 
-  def handle_info({:clicked, %{id: id, name: name}}, socket) do
+  def handle_info({:clicked, %{id: _id, name: name}}, socket) do
     IO.puts("User: #{name}" )
     {:noreply, assign(socket, :clicked, true)}
   end

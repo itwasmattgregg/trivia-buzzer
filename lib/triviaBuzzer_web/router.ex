@@ -17,7 +17,9 @@ defmodule TriviaBuzzerWeb.Router do
   scope "/", TriviaBuzzerWeb do
     pipe_through :browser
 
-    live "/", ButtonLive
+    live "/", HomeLive
+    live "/admin/game/:game_id", AdminGameLive
+    live "/game/:game_code", PlayerLive
   end
 
   # Other scopes may use custom stacks.
