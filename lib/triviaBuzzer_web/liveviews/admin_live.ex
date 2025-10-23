@@ -154,7 +154,7 @@ defmodule TriviaBuzzerWeb.AdminLive do
   end
 
   defp generate_admin_token do
-    :crypto.strong_rand_bytes(16) |> Base.encode64(padding: false)
+    :crypto.strong_rand_bytes(16) |> Base.url_encode64(padding: false)
   end
 
   defp get_winner_name(winner_id, players) do
