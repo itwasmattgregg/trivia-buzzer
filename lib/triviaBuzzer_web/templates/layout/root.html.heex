@@ -5,7 +5,43 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="csrf-token" content={csrf_token_value()}>
-    <%= live_title_tag assigns[:page_title] || "Trivia Buzzer" %>
+    
+    <!-- SEO Meta Tags -->
+    <%= live_title_tag assigns[:page_title] || "Trivia Buzzer - Real-time trivia games with team management" %>
+    <meta name="description" content={assigns[:page_description] || "Create instant trivia games with real-time buzzers and team management. Perfect for online trivia nights, classroom quizzes, and team building events. No downloads required!"}/>
+    <meta name="keywords" content="trivia, quiz, buzzer, real-time, team management, online trivia, classroom, team building, live trivia, interactive quiz"/>
+    <meta name="author" content="Matt Gregg"/>
+    <meta name="robots" content="index, follow"/>
+    <meta name="language" content="en"/>
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website"/>
+    <meta property="og:url" content={assigns[:canonical_url] || "https://trivia-buzzer.com"}/>
+    <meta property="og:title" content={assigns[:page_title] || "Trivia Buzzer - Real-time trivia games with team management"}/>
+    <meta property="og:description" content={assigns[:page_description] || "Create instant trivia games with real-time buzzers and team management. Perfect for online trivia nights, classroom quizzes, and team building events."}/>
+    <meta property="og:image" content={assigns[:og_image] || "https://trivia-buzzer.com/images/og-image.png"}/>
+    <meta property="og:site_name" content="Trivia Buzzer"/>
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image"/>
+    <meta property="twitter:url" content={assigns[:canonical_url] || "https://trivia-buzzer.com"}/>
+    <meta property="twitter:title" content={assigns[:page_title] || "Trivia Buzzer - Real-time trivia games with team management"}/>
+    <meta property="twitter:description" content={assigns[:page_description] || "Create instant trivia games with real-time buzzers and team management. Perfect for online trivia nights, classroom quizzes, and team building events."}/>
+    <meta property="twitter:image" content={assigns[:og_image] || "https://trivia-buzzer.com/images/og-image.png"}/>
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href={assigns[:canonical_url] || "https://trivia-buzzer.com"}/>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"/>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"/>
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"/>
+    
+    <!-- Performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="dns-prefetch" href="//fonts.googleapis.com"/>
+    
     <link phx-track-static rel="stylesheet" href={Routes.static_path(@conn, "/assets/app.css")}/>
     <script defer phx-track-static type="text/javascript" src={Routes.static_path(@conn, "/assets/app.js")}></script>
   </head>

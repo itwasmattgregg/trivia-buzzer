@@ -28,6 +28,14 @@ defmodule TriviaBuzzerWeb.Router do
     get "/health", HealthController, :index
   end
 
+  # SEO Routes
+  scope "/", TriviaBuzzerWeb do
+    pipe_through :browser
+
+    get "/robots.txt", PageController, :robots
+    get "/sitemap.xml", PageController, :sitemap
+  end
+
   # Other scopes may use custom stacks.
   # scope "/api", TriviaBuzzerWeb do
   #   pipe_through :api
