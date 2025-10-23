@@ -75,7 +75,7 @@ def migrate do
 end
 ```
 
-### Health Check (`lib/trivia_buzzer_web/controllers/health_controller.ex`)
+### Health Check (`lib/triviaBuzzer_web/controllers/health_controller.ex`)
 ```elixir
 def index(conn, _params) do
   json(conn, %{status: "ok", timestamp: DateTime.utc_now()})

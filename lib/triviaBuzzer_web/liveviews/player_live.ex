@@ -337,7 +337,7 @@ defmodule TriviaBuzzerWeb.PlayerLive do
           </div>
         <% else %>
           <div class="glass-card">
-            <h3>Join the Game</h3>
+            <h3>Join the game</h3>
             <p>Enter your name to join the game:</p>
             <form phx-submit="join_game">
               <div class="form-group">

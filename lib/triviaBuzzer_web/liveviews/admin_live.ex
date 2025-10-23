@@ -97,7 +97,7 @@ defmodule TriviaBuzzerWeb.AdminLive do
   def render(assigns) do
     ~H"""
     <div class="admin-container">
-      <h1>Trivia Buzzer Admin</h1>
+      <h1>Trivia Buzzer admin</h1>
       
       <%= if @game do %>
         <div class="game-info">

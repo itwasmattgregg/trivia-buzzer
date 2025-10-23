@@ -166,7 +166,7 @@ defmodule TriviaBuzzerWeb.AdminGameLive do
     ~H"""
     <div class="container">
       <div class="admin-header">
-        <h1>Game Control Center</h1>
+        <h1>Game control center</h1>
         <p>Manage your trivia game in real-time</p>
       </div>
       
@@ -309,7 +309,7 @@ defmodule TriviaBuzzerWeb.AdminGameLive do
         </div>
 
         <div class="share-section">
-          <h3>Share Your Game</h3>
+          <h3>Share your game</h3>
           <p>Send this link to your players:</p>
           <div class="share-link">
             <input 

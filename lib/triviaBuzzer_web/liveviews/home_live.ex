@@ -59,7 +59,7 @@ defmodule TriviaBuzzerWeb.HomeLive do
       <div class="action-cards">
         <!-- Join Game Card -->
         <div class="action-card">
-          <h3>Join a Game</h3>
+          <h3>Join a game</h3>
           <p>Have a game code? Enter it below to join the fun!</p>
           <form phx-submit="join_game" class="join-form">
             <div class="form-group">
@@ -78,7 +78,7 @@ defmodule TriviaBuzzerWeb.HomeLive do
 
         <!-- Create Game Card -->
         <div class="action-card">
-          <h3>Create a Game</h3>
+          <h3>Create a game</h3>
           <p>Start your own trivia game and share the code with players!</p>
           <form phx-submit="create_game" class="create-form">
             <div class="form-group">
@@ -98,50 +98,55 @@ defmodule TriviaBuzzerWeb.HomeLive do
 
       <!-- Features Section -->
       <div class="glass-card">
-        <h2 class="text-center mb-4">Why Choose Trivia Buzzer?</h2>
+        <h2 class="text-center mb-4">Why choose Trivia Buzzer?</h2>
         <div class="features-grid">
           <div class="feature">
             <div class="feature-icon">⚡</div>
-            <h4>Lightning Fast</h4>
+            <h4>Lightning fast</h4>
             <p>Real-time updates with zero lag. Players see changes instantly.</p>
           </div>
           <div class="feature">
+            <div class="feature-icon">👥</div>
+            <h4>Team management</h4>
+            <p>Create teams, organize players, and track team performance with visual indicators.</p>
+          </div>
+          <div class="feature">
             <div class="feature-icon">🔗</div>
-            <h4>Simple Sharing</h4>
+            <h4>Simple sharing</h4>
             <p>Just share a game code. No downloads, no accounts, no hassle.</p>
           </div>
           <div class="feature">
             <div class="feature-icon">📱</div>
-            <h4>Mobile Friendly</h4>
+            <h4>Mobile friendly</h4>
             <p>Works perfectly on phones, tablets, and computers.</p>
           </div>
           <div class="feature">
             <div class="feature-icon">🎯</div>
-            <h4>Fair Play</h4>
-            <p>First-come-first-served buzzer system ensures fair competition.</p>
+            <h4>Fair play</h4>
+            <p>Smart team switching restrictions ensure fair competition during active gameplay.</p>
           </div>
         </div>
       </div>
       
       <!-- How It Works -->
       <div class="glass-card mt-5">
-        <h2 class="text-center mb-4">How It Works</h2>
+        <h2 class="text-center mb-4">How it works</h2>
         <ol class="steps">
           <li class="step">
-            <h4>Create Game</h4>
+            <h4>Create game</h4>
             <p>Enter a game name and get a unique code</p>
           </li>
           <li class="step">
-            <h4>Share Code</h4>
+            <h4>Share code</h4>
             <p>Send the code to your players via text, email, or chat</p>
           </li>
           <li class="step">
-            <h4>Players Join</h4>
-            <p>Players enter their names and join the game</p>
+            <h4>Organize teams</h4>
+            <p>Create teams with custom names and let players join their preferred team</p>
           </li>
           <li class="step">
-            <h4>Start Playing</h4>
-            <p>Open buzzers, ask questions, and see who buzzes first!</p>
+            <h4>Start playing</h4>
+            <p>Open buzzers, ask questions, and see which team buzzes first!</p>
           </li>
         </ol>
       </div>
