@@ -1,7 +1,7 @@
 defmodule TriviaBuzzerWeb.AdminGameLive do
   use TriviaBuzzerWeb, :live_view
 
-  alias TriviaBuzzer.{Games, Players}
+  alias TriviaBuzzer.{Games, Players, Teams}
   alias Phoenix.PubSub
 
   @impl true
@@ -16,7 +16,8 @@ defmodule TriviaBuzzerWeb.AdminGameLive do
       game ->
         PubSub.subscribe(TriviaBuzzer.PubSub, "game:#{game.id}")
         players = Players.list_players_for_game(game.id)
-        {:ok, assign(socket, game: game, players: players)}
+        teams = Teams.list_teams_for_game(game.id)
+        {:ok, assign(socket, game: game, players: players, teams: teams)}
     end
   end
 
@@ -80,6 +81,46 @@ defmodule TriviaBuzzerWeb.AdminGameLive do
         {:noreply, assign(socket, players: updated_players)}
       {:error, _changeset} ->
         {:noreply, put_flash(socket, :error, "Failed to remove player")}
+    end
+  end
+
+  @impl true
+  def handle_event("create_team", %{"team_name" => team_name}, socket) do
+    case Teams.create_team(%{name: team_name, game_id: socket.assigns.game.id}) do
+      {:ok, team} ->
+        # Reload teams with players
+        teams = Teams.list_teams_for_game(socket.assigns.game.id)
+        # Broadcast team creation to all clients
+        PubSub.broadcast(TriviaBuzzer.PubSub, "game:#{socket.assigns.game.id}", {:team_created, team})
+        {:noreply, assign(socket, teams: teams)}
+      {:error, changeset} ->
+        error_message = case changeset.errors do
+          [name: {"has already been taken", _}] -> "A team with this name already exists"
+          _ -> "Failed to create team"
+        end
+        {:noreply, put_flash(socket, :error, error_message)}
+    end
+  end
+
+  @impl true
+  def handle_event("delete_team", %{"team_id" => team_id}, socket) do
+    team_id_int = String.to_integer(team_id)
+    
+    # Find the team in the current teams list
+    case Enum.find(socket.assigns.teams, &(&1.id == team_id_int)) do
+      nil ->
+        {:noreply, put_flash(socket, :error, "Team not found")}
+      team ->
+        case Teams.delete_team(team) do
+          {:ok, _team} ->
+            # Remove team from local list
+            updated_teams = Enum.reject(socket.assigns.teams, &(&1.id == team_id_int))
+            # Broadcast team deletion to all clients
+            PubSub.broadcast(TriviaBuzzer.PubSub, "game:#{socket.assigns.game.id}", {:team_deleted, team_id})
+            {:noreply, assign(socket, teams: updated_teams)}
+          {:error, _changeset} ->
+            {:noreply, put_flash(socket, :error, "Failed to delete team")}
+        end
     end
   end
 
@@ -158,6 +199,9 @@ defmodule TriviaBuzzerWeb.AdminGameLive do
               <div class="detail-item">
                 <strong>Winner:</strong> 
                 <span class="winner-name"><%= get_winner_name(@game.winner_id, @players) %></span>
+                <%= if winner_team = get_winner_team(@game.winner_id, @teams) do %>
+                  <span class="winner-team">(<%= winner_team.name %>)</span>
+                <% end %>
               </div>
             <% end %>
           </div>
@@ -171,12 +215,10 @@ defmodule TriviaBuzzerWeb.AdminGameLive do
             <p class="control-hint">Click to allow players to buzz in</p>
           <% end %>
           <%= if @game.state == "open" do %>
-            <div class="waiting-state">
-              <p class="waiting-message">Buzzers are open! Waiting for players to buzz...</p>
-              <button phx-click="close_buzzers" class="btn btn-secondary btn-large">
-                Close Buzzers
-              </button>
-            </div>
+            <button phx-click="close_buzzers" class="btn btn-secondary btn-large">
+              Close Buzzers
+            </button>
+            <p class="control-hint">Buzzers are open! Waiting for players to buzz...</p>
           <% end %>
           <%= if @game.state == "buzzed" do %>
             <button phx-click="reset_game" class="btn btn-secondary btn-large">
@@ -209,6 +251,60 @@ defmodule TriviaBuzzerWeb.AdminGameLive do
                 </button>
               </div>
             <% end %>
+          <% end %>
+        </div>
+
+        <div class="teams-section">
+          <h3>Teams (<%= length(@teams) %>)</h3>
+          <div class="team-management">
+            <form phx-submit="create_team" class="team-form">
+              <div class="form-group">
+                <input 
+                  type="text" 
+                  name="team_name" 
+                  placeholder="Enter team name" 
+                  required 
+                  class="form-control"
+                />
+                <button type="submit" class="btn btn-primary">Add Team</button>
+              </div>
+            </form>
+          </div>
+          
+          <%= if length(@teams) == 0 do %>
+            <div class="no-teams">
+              <p>No teams created yet. Create teams to organize players!</p>
+            </div>
+          <% else %>
+            <div class="teams-list">
+              <%= for team <- @teams do %>
+                <div class={"team-item #{if team_buzzed_first?(@game, team), do: "team-winner", else: ""}"}>
+                  <div class="team-header">
+                    <h4><%= team.name %></h4>
+                    <%= if team_buzzed_first?(@game, team) do %>
+                      <span class="team-winner-badge">Winner Team!</span>
+                    <% end %>
+                    <button 
+                      phx-click="delete_team" 
+                      phx-value-team_id={team.id}
+                      class="btn btn-small btn-danger"
+                      title="Delete team"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div class="team-members">
+                    <%= if length(team.players) == 0 do %>
+                      <p class="no-members">No members yet</p>
+                    <% else %>
+                      <%= for player <- team.players do %>
+                        <span class={"team-member #{if @game.winner_id == player.id, do: "winner-player", else: ""}"}><%= player.name %></span>
+                      <% end %>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
           <% end %>
         </div>
 
@@ -245,5 +341,19 @@ defmodule TriviaBuzzerWeb.AdminGameLive do
       nil -> "Unknown"
       player -> player.name
     end
+  end
+
+  defp team_buzzed_first?(game, team) do
+    if game.winner_id do
+      Enum.any?(team.players, &(&1.id == game.winner_id))
+    else
+      false
+    end
+  end
+
+  defp get_winner_team(winner_id, teams) do
+    Enum.find(teams, fn team ->
+      Enum.any?(team.players, &(&1.id == winner_id))
+    end)
   end
 end

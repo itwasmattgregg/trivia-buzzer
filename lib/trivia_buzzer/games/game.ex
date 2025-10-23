@@ -9,6 +9,7 @@ defmodule TriviaBuzzer.Games.Game do
     field :state, :string, default: "locked"
 
     has_many :players, TriviaBuzzer.Players.Player
+    has_many :teams, TriviaBuzzer.Teams.Team
     belongs_to :winner, TriviaBuzzer.Players.Player, foreign_key: :winner_id
 
     timestamps()

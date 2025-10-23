@@ -1,7 +1,7 @@
 defmodule TriviaBuzzerWeb.PlayerLive do
   use TriviaBuzzerWeb, :live_view
 
-  alias TriviaBuzzer.{Games, Players}
+  alias TriviaBuzzer.{Games, Players, Teams}
   alias Phoenix.PubSub
 
   @impl true
@@ -21,11 +21,13 @@ defmodule TriviaBuzzerWeb.PlayerLive do
         # Check if there's a stored player ID for this game
         stored_player_id = Map.get(params, "stored_player_id")
         
+        teams = Teams.list_teams_for_game(game.id)
         socket = assign(socket, 
           game: game, 
           player: nil, 
           game_code: game_code, 
-          player_name: player_name
+          player_name: player_name,
+          teams: teams
         )
         
         # First, try to load existing player from stored ID
@@ -110,6 +112,48 @@ defmodule TriviaBuzzerWeb.PlayerLive do
   end
 
   @impl true
+  def handle_event("join_team", %{"team_id" => team_id}, socket) do
+    cond do
+      is_nil(socket.assigns.player) ->
+        {:noreply, put_flash(socket, :error, "You must join the game first")}
+      socket.assigns.game.state != "locked" ->
+        {:noreply, put_flash(socket, :error, "Team switching is only allowed when buzzers are locked")}
+      true ->
+        case Teams.join_team(socket.assigns.player.id, String.to_integer(team_id)) do
+          {:ok, _membership} ->
+            # Reload teams to get updated player lists
+            teams = Teams.list_teams_for_game(socket.assigns.game.id)
+            # Broadcast team update to all clients
+            PubSub.broadcast(TriviaBuzzer.PubSub, "game:#{socket.assigns.game.id}", {:team_updated})
+            {:noreply, assign(socket, teams: teams)}
+          {:error, _changeset} ->
+            {:noreply, put_flash(socket, :error, "Failed to join team")}
+        end
+    end
+  end
+
+  @impl true
+  def handle_event("leave_team", _params, socket) do
+    cond do
+      is_nil(socket.assigns.player) ->
+        {:noreply, put_flash(socket, :error, "You must join the game first")}
+      socket.assigns.game.state != "locked" ->
+        {:noreply, put_flash(socket, :error, "Team switching is only allowed when buzzers are locked")}
+      true ->
+        case Teams.leave_team(socket.assigns.player.id) do
+          {:ok, _} ->
+            # Reload teams to get updated player lists
+            teams = Teams.list_teams_for_game(socket.assigns.game.id)
+            # Broadcast team update to all clients
+            PubSub.broadcast(TriviaBuzzer.PubSub, "game:#{socket.assigns.game.id}", {:team_updated})
+            {:noreply, assign(socket, teams: teams)}
+          {:error, _changeset} ->
+            {:noreply, put_flash(socket, :error, "Failed to leave team")}
+        end
+    end
+  end
+
+  @impl true
   def handle_info({:game_state_changed, state}, socket) do
     updated_game = %{socket.assigns.game | state: state}
     {:noreply, assign(socket, game: updated_game)}
@@ -140,6 +184,38 @@ defmodule TriviaBuzzerWeb.PlayerLive do
     else
       {:noreply, socket}
     end
+  end
+
+  @impl true
+  def handle_info({:team_created, _team}, socket) do
+    teams = Teams.list_teams_for_game(socket.assigns.game.id)
+    {:noreply, assign(socket, teams: teams)}
+  end
+
+  @impl true
+  def handle_info({:team_deleted, _team_id}, socket) do
+    teams = Teams.list_teams_for_game(socket.assigns.game.id)
+    {:noreply, assign(socket, teams: teams)}
+  end
+
+  @impl true
+  def handle_info({:team_updated}, socket) do
+    teams = Teams.list_teams_for_game(socket.assigns.game.id)
+    {:noreply, assign(socket, teams: teams)}
+  end
+
+  # Helper function to check if a player is in a team
+  defp is_player_in_team?(nil, _team), do: false
+  defp is_player_in_team?(_player, nil), do: false
+  defp is_player_in_team?(player, team) do
+    Enum.any?(team.players, &(&1.id == player.id))
+  end
+
+  # Helper function to check if a player is in any team
+  defp player_in_any_team?(nil, _teams), do: false
+  defp player_in_any_team?(_player, []), do: false
+  defp player_in_any_team?(player, teams) do
+    Enum.any?(teams, &is_player_in_team?(player, &1))
   end
 
   # Helper function to handle player joining logic
@@ -218,6 +294,46 @@ defmodule TriviaBuzzerWeb.PlayerLive do
                 </div>
               <% end %>
             </div>
+          </div>
+
+          <div class="teams-section">
+            <h3>Teams</h3>
+            <%= if length(@teams) == 0 do %>
+              <div class="no-teams">
+                <p>No teams have been created yet. Wait for the admin to create teams!</p>
+              </div>
+            <% else %>
+              <div class="teams-list">
+                <%= for team <- @teams do %>
+                  <div class={"team-box #{if @game.state != "locked", do: "team-disabled"}"} 
+                       phx-click={if @game.state == "locked", do: "join_team", else: nil} 
+                       phx-value-team_id={team.id}>
+                    <div class="team-header">
+                      <h4><%= team.name %></h4>
+                    </div>
+                    <div class="team-members">
+                      <%= if length(team.players) == 0 do %>
+                        <p class="no-members">No members yet - Click to join!</p>
+                      <% else %>
+                        <%= for player <- team.players do %>
+                          <span class="team-member"><%= player.name %></span>
+                        <% end %>
+                        <%= if @game.state == "locked" and not is_player_in_team?(@player, team) do %>
+                          <p class="join-hint">Click to join this team</p>
+                        <% end %>
+                      <% end %>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+              <%= if player_in_any_team?(@player, @teams) and @game.state == "locked" do %>
+                <div class="team-actions">
+                  <button phx-click="leave_team" class="btn btn-secondary">
+                    Leave Current Team
+                  </button>
+                </div>
+              <% end %>
+            <% end %>
           </div>
         <% else %>
           <div class="glass-card">
