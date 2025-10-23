@@ -21,6 +21,17 @@ defmodule TriviaBuzzer.Players do
   def get_player!(id), do: Repo.get!(Player, id)
 
   @doc """
+  Gets a single player by ID, returns nil if not found.
+  """
+  def get_player(id) when is_integer(id), do: Repo.get(Player, id)
+  def get_player(id) when is_binary(id) do
+    case Integer.parse(id) do
+      {int_id, ""} -> get_player(int_id)
+      _ -> nil
+    end
+  end
+
+  @doc """
   Creates a player.
   """
   def create_player(attrs \\ %{}) do
@@ -43,6 +54,13 @@ defmodule TriviaBuzzer.Players do
   """
   def delete_player(%Player{} = player) do
     Repo.delete(player)
+  end
+
+  def delete_player(id) when is_integer(id) do
+    case Repo.get(Player, id) do
+      nil -> {:error, :not_found}
+      player -> delete_player(player)
+    end
   end
 
   @doc """

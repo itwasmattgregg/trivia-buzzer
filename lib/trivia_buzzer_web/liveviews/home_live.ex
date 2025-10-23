@@ -33,7 +33,7 @@ defmodule TriviaBuzzerWeb.HomeLive do
       admin_token: admin_token
     }) do
       {:ok, game} ->
-        {:noreply, redirect(socket, to: "/admin/game/#{game.id}")}
+        {:noreply, redirect(socket, to: "/admin/#{game.admin_token}")}
       {:error, _changeset} ->
         {:noreply, put_flash(socket, :error, "Failed to create game")}
     end
@@ -42,22 +42,24 @@ defmodule TriviaBuzzerWeb.HomeLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="marketing-container">
+    <div class="container">
       <!-- Hero Section -->
-      <div class="hero-section">
-        <h1 class="hero-title">🎯 Trivia Buzzer</h1>
-        <p class="hero-subtitle">Real-time trivia games made simple</p>
-        <p class="hero-description">
-          Create instant trivia games with custom codes. Players join with a simple link and buzz in when ready. 
-          Perfect for online trivia nights, classroom quizzes, and team building events.
-        </p>
+      <div class="hero">
+        <div class="hero-content">
+          <h1 class="hero-title">Trivia Buzzer</h1>
+          <p class="hero-subtitle">Real-time trivia games made simple</p>
+          <p class="hero-description">
+            Create instant trivia games with custom codes. Players join with a simple link and buzz in when ready. 
+            Perfect for online trivia nights, classroom quizzes, and team building events.
+          </p>
+        </div>
       </div>
 
       <!-- Action Cards -->
       <div class="action-cards">
         <!-- Join Game Card -->
         <div class="action-card">
-          <h2>🎮 Join a Game</h2>
+          <h3>Join a Game</h3>
           <p>Have a game code? Enter it below to join the fun!</p>
           <form phx-submit="join_game" class="join-form">
             <div class="form-group">
@@ -76,7 +78,7 @@ defmodule TriviaBuzzerWeb.HomeLive do
 
         <!-- Create Game Card -->
         <div class="action-card">
-          <h2>🎪 Create a Game</h2>
+          <h3>Create a Game</h3>
           <p>Start your own trivia game and share the code with players!</p>
           <form phx-submit="create_game" class="create-form">
             <div class="form-group">
@@ -95,57 +97,53 @@ defmodule TriviaBuzzerWeb.HomeLive do
       </div>
 
       <!-- Features Section -->
-      <div class="features-section">
-        <h2>Why Choose Trivia Buzzer?</h2>
+      <div class="glass-card">
+        <h2 class="text-center mb-4">Why Choose Trivia Buzzer?</h2>
         <div class="features-grid">
           <div class="feature">
             <div class="feature-icon">⚡</div>
-            <h3>Lightning Fast</h3>
+            <h4>Lightning Fast</h4>
             <p>Real-time updates with zero lag. Players see changes instantly.</p>
           </div>
           <div class="feature">
             <div class="feature-icon">🔗</div>
-            <h3>Simple Sharing</h3>
+            <h4>Simple Sharing</h4>
             <p>Just share a game code. No downloads, no accounts, no hassle.</p>
           </div>
           <div class="feature">
             <div class="feature-icon">📱</div>
-            <h3>Mobile Friendly</h3>
+            <h4>Mobile Friendly</h4>
             <p>Works perfectly on phones, tablets, and computers.</p>
           </div>
           <div class="feature">
             <div class="feature-icon">🎯</div>
-            <h3>Fair Play</h3>
+            <h4>Fair Play</h4>
             <p>First-come-first-served buzzer system ensures fair competition.</p>
           </div>
         </div>
       </div>
-
+      
       <!-- How It Works -->
-      <div class="how-it-works">
-        <h2>How It Works</h2>
-        <div class="steps">
-          <div class="step">
-            <div class="step-number">1</div>
-            <h3>Create Game</h3>
+      <div class="glass-card mt-5">
+        <h2 class="text-center mb-4">How It Works</h2>
+        <ol class="steps">
+          <li class="step">
+            <h4>Create Game</h4>
             <p>Enter a game name and get a unique code</p>
-          </div>
-          <div class="step">
-            <div class="step-number">2</div>
-            <h3>Share Code</h3>
+          </li>
+          <li class="step">
+            <h4>Share Code</h4>
             <p>Send the code to your players via text, email, or chat</p>
-          </div>
-          <div class="step">
-            <div class="step-number">3</div>
-            <h3>Players Join</h3>
+          </li>
+          <li class="step">
+            <h4>Players Join</h4>
             <p>Players enter their names and join the game</p>
-          </div>
-          <div class="step">
-            <div class="step-number">4</div>
-            <h3>Start Playing</h3>
+          </li>
+          <li class="step">
+            <h4>Start Playing</h4>
             <p>Open buzzers, ask questions, and see who buzzes first!</p>
-          </div>
-        </div>
+          </li>
+        </ol>
       </div>
     </div>
     """

@@ -18,7 +18,7 @@ defmodule TriviaBuzzerWeb.Router do
     pipe_through :browser
 
     live "/", HomeLive
-    live "/admin/game/:game_id", AdminGameLive
+    live "/admin/:admin_token", AdminGameLive
     live "/game/:game_code", PlayerLive
   end
 

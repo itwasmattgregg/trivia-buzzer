@@ -5,8 +5,8 @@ defmodule TriviaBuzzerWeb.AdminGameLive do
   alias Phoenix.PubSub
 
   @impl true
-  def mount(%{"game_id" => game_id}, _session, socket) do
-    case Games.get_game!(game_id) do
+  def mount(%{"admin_token" => admin_token}, _session, socket) do
+    case Games.get_game_by_admin_token(admin_token) do
       nil ->
         {:ok, 
           socket
@@ -20,6 +20,9 @@ defmodule TriviaBuzzerWeb.AdminGameLive do
     end
   end
 
+
+
+
   @impl true
   def handle_event("open_buzzers", _params, socket) do
     case Games.update_game_state(socket.assigns.game, "open") do
@@ -28,6 +31,17 @@ defmodule TriviaBuzzerWeb.AdminGameLive do
         {:noreply, assign(socket, game: updated_game)}
       {:error, _changeset} ->
         {:noreply, put_flash(socket, :error, "Failed to open buzzers")}
+    end
+  end
+
+  @impl true
+  def handle_event("close_buzzers", _params, socket) do
+    case Games.update_game_state(socket.assigns.game, "locked") do
+      {:ok, updated_game} ->
+        PubSub.broadcast(TriviaBuzzer.PubSub, "game:#{socket.assigns.game.id}", {:game_state_changed, "locked"})
+        {:noreply, assign(socket, game: updated_game)}
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Failed to close buzzers")}
     end
   end
 
@@ -43,29 +57,6 @@ defmodule TriviaBuzzerWeb.AdminGameLive do
   end
 
   @impl true
-  def handle_info({:player_joined, player}, socket) do
-    players = [player | socket.assigns.players]
-    {:noreply, assign(socket, players: players)}
-  end
-
-  @impl true
-  def handle_info({:buzzer_clicked, player}, socket) do
-    case Games.set_winner(socket.assigns.game, player.id) do
-      {:ok, updated_game} ->
-        PubSub.broadcast(TriviaBuzzer.PubSub, "game:#{socket.assigns.game.id}", {:buzzer_clicked, player})
-        {:noreply, assign(socket, game: updated_game)}
-      {:error, _changeset} ->
-        {:noreply, socket}
-    end
-  end
-
-  @impl true
-  def handle_info({:game_state_changed, _state}, socket) do
-    # Don't fetch from database to avoid loops
-    {:noreply, socket}
-  end
-
-  @impl true
   def handle_event("copy_code", _params, socket) do
     {:noreply, put_flash(socket, :info, "Game code copied to clipboard!")}
   end
@@ -75,28 +66,82 @@ defmodule TriviaBuzzerWeb.AdminGameLive do
     {:noreply, put_flash(socket, :info, "Game link copied to clipboard!")}
   end
 
+
+  @impl true
+  def handle_event("delete_player", %{"player_id" => player_id}, socket) do
+    player_id_int = String.to_integer(player_id)
+    
+    case Players.delete_player(player_id_int) do
+      {:ok, _player} ->
+        # Remove player from local list
+        updated_players = Enum.reject(socket.assigns.players, &(&1.id == player_id_int))
+        # Broadcast player removal to all clients
+        PubSub.broadcast(TriviaBuzzer.PubSub, "game:#{socket.assigns.game.id}", {:player_removed, player_id})
+        {:noreply, assign(socket, players: updated_players)}
+      {:error, _changeset} ->
+        {:noreply, put_flash(socket, :error, "Failed to remove player")}
+    end
+  end
+
+
+  @impl true
+  def handle_info({:player_joined, player}, socket) do
+    players = [player | socket.assigns.players]
+    {:noreply, assign(socket, players: players)}
+  end
+
+  @impl true
+  def handle_info({:player_removed, player_id}, socket) do
+    updated_players = Enum.reject(socket.assigns.players, &(&1.id == String.to_integer(player_id)))
+    {:noreply, assign(socket, players: updated_players)}
+  end
+
+
+  @impl true
+  def handle_info({:buzzer_clicked, player}, socket) do
+    # Only process buzzer clicks if the game is currently open
+    if socket.assigns.game.state == "open" do
+      case Games.set_winner(socket.assigns.game, player.id) do
+        {:ok, updated_game} ->
+          PubSub.broadcast(TriviaBuzzer.PubSub, "game:#{socket.assigns.game.id}", {:buzzer_clicked, player})
+          {:noreply, assign(socket, game: updated_game)}
+        {:error, _changeset} ->
+          {:noreply, socket}
+      end
+    else
+      {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_info({:game_state_changed, state}, socket) do
+    updated_game = %{socket.assigns.game | state: state}
+    {:noreply, assign(socket, game: updated_game)}
+  end
+
+
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="admin-container">
+    <div class="container">
       <div class="admin-header">
-        <h1>🎪 Game Control Center</h1>
+        <h1>Game Control Center</h1>
         <p>Manage your trivia game in real-time</p>
       </div>
       
       <%= if @game do %>
         <div class="game-info">
-          <h2>📝 Game: <%= @game.name %></h2>
+          <h2>Game: <%= @game.name %></h2>
           <div class="game-details">
             <div class="detail-item">
               <strong>Game Code:</strong> 
               <span class="game-code"><%= @game.game_code %></span>
               <button 
                 phx-click="copy_code" 
-                class="btn btn-small btn-outline"
+                class="btn btn-small btn-secondary"
                 data-code={@game.game_code}
               >
-                📋 Copy
+                Copy
               </button>
             </div>
             <div class="detail-item">
@@ -121,45 +166,54 @@ defmodule TriviaBuzzerWeb.AdminGameLive do
         <div class="game-controls">
           <%= if @game.state == "locked" do %>
             <button phx-click="open_buzzers" class="btn btn-primary btn-large">
-              🚀 Open Buzzers
+              Open Buzzers
             </button>
             <p class="control-hint">Click to allow players to buzz in</p>
           <% end %>
           <%= if @game.state == "open" do %>
             <div class="waiting-state">
-              <p class="waiting-message">⏳ Buzzers are open! Waiting for players to buzz...</p>
+              <p class="waiting-message">Buzzers are open! Waiting for players to buzz...</p>
+              <button phx-click="close_buzzers" class="btn btn-secondary btn-large">
+                Close Buzzers
+              </button>
             </div>
           <% end %>
           <%= if @game.state == "buzzed" do %>
             <button phx-click="reset_game" class="btn btn-secondary btn-large">
-              🔄 Reset Game
+              Reset Game
             </button>
             <p class="control-hint">Click to start the next question</p>
           <% end %>
         </div>
 
-        <div class="players-section">
-          <h3>👥 Players (<%= length(@players) %>)</h3>
+        <div class="players-list">
+          <h3>Players (<%= length(@players) %>)</h3>
           <%= if length(@players) == 0 do %>
             <div class="no-players">
               <p>No players have joined yet. Share the game code to get started!</p>
             </div>
           <% else %>
-            <div class="players-list">
-              <%= for player <- @players do %>
-                <div class="player-item">
-                  <span class="player-name"><%= player.name %></span>
-                  <%= if @game.winner_id == player.id do %>
-                    <span class="winner-badge">🏆 Winner!</span>
-                  <% end %>
-                </div>
-              <% end %>
-            </div>
+            <%= for player <- @players do %>
+              <div class="player-item">
+                <span class="player-name"><%= player.name %></span>
+                <%= if @game.winner_id == player.id do %>
+                  <span class="winner-badge">Winner!</span>
+                <% end %>
+                <button 
+                  phx-click="delete_player" 
+                  phx-value-player_id={player.id}
+                  class="btn btn-small btn-danger"
+                  title="Remove player"
+                >
+                  ×
+                </button>
+              </div>
+            <% end %>
           <% end %>
         </div>
 
         <div class="share-section">
-          <h3>📤 Share Your Game</h3>
+          <h3>Share Your Game</h3>
           <p>Send this link to your players:</p>
           <div class="share-link">
             <input 
@@ -170,10 +224,10 @@ defmodule TriviaBuzzerWeb.AdminGameLive do
             />
             <button 
               phx-click="copy_link" 
-              class="btn btn-small"
+              class="btn btn-small btn-primary"
               data-link={"http://localhost:4000/game/#{@game.game_code}"}
             >
-              📋 Copy Link
+              Copy Link
             </button>
           </div>
         </div>
