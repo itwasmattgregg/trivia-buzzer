@@ -10,8 +10,7 @@ defmodule TriviaBuzzerWeb.PlayerLive do
       nil ->
         {:ok, 
           socket
-          |> assign(game: nil, player: nil, game_code: game_code, player_name: "")
-          |> put_flash(:error, "Game not found")
+          |> assign(game: nil, player: nil, game_code: game_code, player_name: "", show_game_not_found: true)
         }
       game ->
         PubSub.subscribe(TriviaBuzzer.PubSub, "game:#{game.id}")
@@ -27,7 +26,8 @@ defmodule TriviaBuzzerWeb.PlayerLive do
           player: nil, 
           game_code: game_code, 
           player_name: player_name,
-          teams: teams
+          teams: teams,
+          show_game_not_found: false
         )
         
         # First, try to load existing player from stored ID
@@ -204,6 +204,15 @@ defmodule TriviaBuzzerWeb.PlayerLive do
     {:noreply, assign(socket, teams: teams)}
   end
 
+  @impl true
+  def handle_info({:team_points_updated, updated_team}, socket) do
+    # Update the team in the teams list
+    updated_teams = Enum.map(socket.assigns.teams, fn team ->
+      if team.id == updated_team.id, do: updated_team, else: team
+    end)
+    {:noreply, assign(socket, teams: updated_teams)}
+  end
+
   # Helper function to check if a player is in a team
   defp is_player_in_team?(nil, _team), do: false
   defp is_player_in_team?(_player, nil), do: false
@@ -243,7 +252,7 @@ defmodule TriviaBuzzerWeb.PlayerLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div id="player-game-container" class="container" phx-hook="PlayerGame" data-game-code={@game_code}>
+    <div id="player-game-container" class="container" phx-hook="PlayerGame" data-game-code={@game_code} data-show-game-not-found={@show_game_not_found}>
       <div class="hero">
         <div class="hero-content">
           <h1 class="hero-title">Trivia Buzzer</h1>
@@ -308,6 +317,11 @@ defmodule TriviaBuzzerWeb.PlayerLive do
                   <div class={"team-box #{if @game.state != "locked", do: "team-disabled"}"} 
                        phx-click={if @game.state == "locked", do: "join_team", else: nil} 
                        phx-value-team_id={team.id}>
+                    <!-- Points Badge -->
+                    <div class="team-points-badge">
+                      <%= team.points %>
+                    </div>
+                    
                     <div class="team-header">
                       <h4><%= team.name %></h4>
                     </div>
@@ -357,8 +371,24 @@ defmodule TriviaBuzzerWeb.PlayerLive do
           </div>
         <% end %>
       <% else %>
-        <div class="error">
-          <p>Game not found. Please check the game code.</p>
+        <div class="join-game-form">
+          <h3>Join the game</h3>
+          <p>Enter your name to join this game:</p>
+          <form phx-submit="join_game">
+            <div class="form-group">
+              <input 
+                type="text" 
+                name="player_name" 
+                placeholder="Your name" 
+                value={@player_name}
+                required 
+                class="form-control"
+                id="player_name"
+                phx-hook="PlayerName"
+              />
+              <button type="submit" class="btn btn-primary">Join Game</button>
+            </div>
+          </form>
         </div>
       <% end %>
     </div>

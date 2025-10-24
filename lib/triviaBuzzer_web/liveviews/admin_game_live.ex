@@ -59,12 +59,14 @@ defmodule TriviaBuzzerWeb.AdminGameLive do
 
   @impl true
   def handle_event("copy_code", _params, socket) do
-    {:noreply, put_flash(socket, :info, "Game code copied to clipboard!")}
+    # Toast message is handled by JavaScript
+    {:noreply, socket}
   end
 
   @impl true
   def handle_event("copy_link", _params, socket) do
-    {:noreply, put_flash(socket, :info, "Game link copied to clipboard!")}
+    # Toast message is handled by JavaScript
+    {:noreply, socket}
   end
 
 
@@ -124,6 +126,53 @@ defmodule TriviaBuzzerWeb.AdminGameLive do
     end
   end
 
+  @impl true
+  def handle_event("add_points", %{"team_id" => team_id, "points" => points}, socket) do
+    team_id_int = String.to_integer(team_id)
+    points_int = String.to_integer(points)
+    
+    case Enum.find(socket.assigns.teams, &(&1.id == team_id_int)) do
+      nil ->
+        {:noreply, put_flash(socket, :error, "Team not found")}
+      team ->
+        case Teams.add_points(team, points_int) do
+          {:ok, updated_team} ->
+            # Update the team in the teams list
+            updated_teams = Enum.map(socket.assigns.teams, fn t ->
+              if t.id == team_id_int, do: updated_team, else: t
+            end)
+            # Broadcast points update to all clients
+            PubSub.broadcast(TriviaBuzzer.PubSub, "game:#{socket.assigns.game.id}", {:team_points_updated, updated_team})
+            {:noreply, assign(socket, teams: updated_teams)}
+          {:error, _changeset} ->
+            {:noreply, put_flash(socket, :error, "Failed to add points")}
+        end
+    end
+  end
+
+  @impl true
+  def handle_event("subtract_points", %{"team_id" => team_id, "points" => points}, socket) do
+    team_id_int = String.to_integer(team_id)
+    points_int = String.to_integer(points)
+    
+    case Enum.find(socket.assigns.teams, &(&1.id == team_id_int)) do
+      nil ->
+        {:noreply, put_flash(socket, :error, "Team not found")}
+      team ->
+        case Teams.subtract_points(team, points_int) do
+          {:ok, updated_team} ->
+            # Update the team in the teams list
+            updated_teams = Enum.map(socket.assigns.teams, fn t ->
+              if t.id == team_id_int, do: updated_team, else: t
+            end)
+            # Broadcast points update to all clients
+            PubSub.broadcast(TriviaBuzzer.PubSub, "game:#{socket.assigns.game.id}", {:team_points_updated, updated_team})
+            {:noreply, assign(socket, teams: updated_teams)}
+          {:error, _changeset} ->
+            {:noreply, put_flash(socket, :error, "Failed to subtract points")}
+        end
+    end
+  end
 
   @impl true
   def handle_info({:player_joined, player}, socket) do
@@ -160,6 +209,14 @@ defmodule TriviaBuzzerWeb.AdminGameLive do
     {:noreply, assign(socket, game: updated_game)}
   end
 
+  @impl true
+  def handle_info({:team_points_updated, updated_team}, socket) do
+    # Update the team in the teams list
+    updated_teams = Enum.map(socket.assigns.teams, fn team ->
+      if team.id == updated_team.id, do: updated_team, else: team
+    end)
+    {:noreply, assign(socket, teams: updated_teams)}
+  end
 
   @impl true
   def render(assigns) do
@@ -292,6 +349,52 @@ defmodule TriviaBuzzerWeb.AdminGameLive do
                     >
                       ×
                     </button>
+                  </div>
+                  
+                  <!-- Points Management -->
+                  <div class="team-points">
+                    <div class="points-display">
+                      <span class="points-label">Points:</span>
+                      <span class="points-value"><%= team.points %></span>
+                    </div>
+                    <div class="points-controls">
+                      <button 
+                        phx-click="subtract_points" 
+                        phx-value-team_id={team.id}
+                        phx-value-points="5"
+                        class="btn btn-small btn-warning"
+                        title="Subtract 5 points"
+                      >
+                        -5
+                      </button>
+                      <button 
+                        phx-click="subtract_points" 
+                        phx-value-team_id={team.id}
+                        phx-value-points="1"
+                        class="btn btn-small btn-warning"
+                        title="Subtract 1 point"
+                      >
+                        -1
+                      </button>
+                      <button 
+                        phx-click="add_points" 
+                        phx-value-team_id={team.id}
+                        phx-value-points="1"
+                        class="btn btn-small btn-success"
+                        title="Add 1 point"
+                      >
+                        +1
+                      </button>
+                      <button 
+                        phx-click="add_points" 
+                        phx-value-team_id={team.id}
+                        phx-value-points="5"
+                        class="btn btn-small btn-success"
+                        title="Add 5 points"
+                      >
+                        +5
+                      </button>
+                    </div>
                   </div>
                   <div class="team-members">
                     <%= if length(team.players) == 0 do %>

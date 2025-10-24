@@ -127,4 +127,27 @@ defmodule TriviaBuzzer.Teams do
     )
     |> Repo.all()
   end
+
+  @doc """
+  Adds points to a team.
+  """
+  def add_points(%Team{} = team, points) when is_integer(points) and points > 0 do
+    new_points = team.points + points
+    update_team(team, %{points: new_points})
+  end
+
+  @doc """
+  Subtracts points from a team (minimum 0).
+  """
+  def subtract_points(%Team{} = team, points) when is_integer(points) and points > 0 do
+    new_points = max(0, team.points - points)
+    update_team(team, %{points: new_points})
+  end
+
+  @doc """
+  Sets the points for a team.
+  """
+  def set_points(%Team{} = team, points) when is_integer(points) and points >= 0 do
+    update_team(team, %{points: points})
+  end
 end

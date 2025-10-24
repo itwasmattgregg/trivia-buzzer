@@ -7,6 +7,14 @@
   box-sizing: border-box;
 }
 
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: hidden;
+}
+
 :root {
   /* Color Palette - Fly.io Inspired */
   --primary: #00d4aa;
@@ -290,6 +298,14 @@ label {
   );
   position: relative;
   overflow: hidden;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-top: 0;
+}
+
+/* Player page hero spacing */
+#player-game-container .hero {
+  margin-bottom: var(--space-xl);
 }
 
 .hero::before {
@@ -315,6 +331,9 @@ label {
 .hero-content {
   position: relative;
   z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
 }
 
 .hero-title {
@@ -672,7 +691,18 @@ label {
 /* Responsive Design */
 @media (max-width: 768px) {
   .container {
-    padding: 0 var(--space-md);
+    padding: 0; /* Remove horizontal padding on mobile */
+  }
+
+  /* Add padding to main content areas on mobile */
+  .glass-card,
+  .admin-header,
+  .player-header,
+  .teams-section,
+  .game-controls,
+  .waiting-state {
+    margin-left: var(--space-md);
+    margin-right: var(--space-md);
   }
 
   .hero-title {
@@ -995,7 +1025,7 @@ label {
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
-  overflow: hidden;
+  overflow: visible; /* Allow points badge to be visible */
 }
 
 .team-box::before {
@@ -1011,6 +1041,8 @@ label {
     rgba(108, 92, 231, 0.05) 100%
   );
   z-index: -1;
+  border-radius: var(--radius-lg); /* Match the parent border radius */
+  overflow: hidden; /* Keep the gradient contained */
 }
 
 .team-box:hover {
@@ -1160,7 +1192,7 @@ a:focus {
 /* Skip to content link */
 .skip-link {
   position: absolute;
-  top: -40px;
+  top: -9999px;
   left: 6px;
   background: var(--primary);
   color: white;
@@ -1172,4 +1204,134 @@ a:focus {
 
 .skip-link:focus {
   top: 6px;
+}
+
+/* Toast Messages */
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md) var(--space-lg);
+  color: var(--text-primary);
+  font-weight: 500;
+  box-shadow: var(--glass-shadow);
+  z-index: 1000;
+  transform: translateX(100%);
+  transition: all 0.3s ease;
+  max-width: 300px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.toast.show {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.toast.success {
+  border-left: 4px solid var(--success);
+}
+
+.toast.info {
+  border-left: 4px solid var(--primary);
+}
+
+.toast.warning {
+  border-left: 4px solid var(--warning);
+}
+
+.toast.danger {
+  border-left: 4px solid var(--danger);
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.toast-icon {
+  font-size: 1.2em;
+}
+
+.toast-message {
+  flex: 1;
+}
+
+/* Mobile toast positioning */
+@media (max-width: 768px) {
+  .toast {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+}
+
+/* Points Management Styles */
+.team-points {
+  margin: var(--space-md) 0;
+  padding: var(--space-md);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--border-radius);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.points-display {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.points-label {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.points-value {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: var(--primary);
+  background: rgba(255, 255, 255, 0.2);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--border-radius-sm);
+  min-width: 2em;
+  text-align: center;
+}
+
+.points-controls {
+  display: flex;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+}
+
+.points-controls .btn {
+  font-size: 0.8em;
+  padding: var(--space-xs) var(--space-sm);
+  min-width: 2.5em;
+}
+
+/* Player view points badge */
+.team-points-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7em;
+  font-weight: bold;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }

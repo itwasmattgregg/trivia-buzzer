@@ -16,7 +16,8 @@ defmodule TriviaBuzzerWeb.HomeLive do
   def handle_event("join_game", %{"game_code" => game_code}, socket) do
     case Games.get_game_by_code(game_code) do
       nil ->
-        {:noreply, put_flash(socket, :error, "Game not found. Please check the code.")}
+        # Toast message will be handled by JavaScript
+        {:noreply, socket}
       _game ->
         {:noreply, redirect(socket, to: "/game/#{game_code}")}
     end

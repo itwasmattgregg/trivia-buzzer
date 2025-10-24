@@ -31,7 +31,10 @@ let csrfToken = document
   .getAttribute('content');
 
 // Show progress bar on live navigation and form submits
-topbar.config({ barColors: { 0: '#29d' }, shadowColor: 'rgba(0, 0, 0, .3)' });
+topbar.config({
+  barColors: { 0: '#00d4aa' },
+  shadowColor: 'rgba(0, 0, 0, .3)',
+});
 window.addEventListener('phx:page-loading-start', (info) => topbar.show());
 window.addEventListener('phx:page-loading-stop', (info) => topbar.hide());
 
@@ -139,6 +142,11 @@ const Hooks = {
       this.handleEvent('clear_player_id', (data) => {
         PlayerStorage.clearPlayerId(data.game_code);
       });
+
+      // Show game not found toast if needed
+      if (this.el.dataset.showGameNotFound === 'true') {
+        Toast.show('Game not found. Please check the game code.', 'danger');
+      }
     },
   },
 };
@@ -158,19 +166,93 @@ liveSocket.connect();
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket;
 
-// Copy to clipboard functionality
+// Clean up any orphaned toasts on page load
+document.addEventListener('DOMContentLoaded', () => {
+  const existingToasts = document.querySelectorAll('.toast');
+  existingToasts.forEach((toast) => toast.remove());
+});
+
+// Toast message system
+const Toast = {
+  show: (message, type = 'info', duration = 3000) => {
+    // Remove any existing toasts
+    const existingToasts = document.querySelectorAll('.toast');
+    existingToasts.forEach((toast) => toast.remove());
+
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+
+    const icon =
+      type === 'success'
+        ? '✓'
+        : type === 'info'
+        ? 'ℹ'
+        : type === 'warning'
+        ? '⚠'
+        : '✕';
+
+    toast.innerHTML = `
+      <div class="toast-content">
+        <span class="toast-icon">${icon}</span>
+        <span class="toast-message">${message}</span>
+      </div>
+    `;
+
+    // Add to page
+    document.body.appendChild(toast);
+
+    // Trigger animation
+    setTimeout(() => toast.classList.add('show'), 10);
+
+    // Auto remove
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }, duration);
+  },
+};
+
+// Copy to clipboard functionality with toast messages
 document.addEventListener('click', (e) => {
   if (e.target.matches("[phx-click='copy_code']")) {
     const gameCode = e.target.getAttribute('data-code');
-    navigator.clipboard.writeText(gameCode).then(() => {
-      // Flash message will be handled by LiveView
-    });
+    navigator.clipboard
+      .writeText(gameCode)
+      .then(() => {
+        Toast.show('Game code copied to clipboard!', 'success');
+      })
+      .catch(() => {
+        Toast.show('Failed to copy game code', 'danger');
+      });
   }
 
   if (e.target.matches("[phx-click='copy_link']")) {
     const gameLink = e.target.getAttribute('data-link');
-    navigator.clipboard.writeText(gameLink).then(() => {
-      // Flash message will be handled by LiveView
-    });
+    navigator.clipboard
+      .writeText(gameLink)
+      .then(() => {
+        Toast.show('Game link copied to clipboard!', 'success');
+      })
+      .catch(() => {
+        Toast.show('Failed to copy game link', 'danger');
+      });
+  }
+});
+
+// Handle form submissions for game joining
+document.addEventListener('submit', (e) => {
+  if (e.target.matches('form[phx-submit="join_game"]')) {
+    // Store the form data to check later if redirect happened
+    const formData = new FormData(e.target);
+    const gameCode = formData.get('game_code');
+
+    // Set a timeout to check if redirect happened
+    setTimeout(() => {
+      // If we're still on the same page, the game wasn't found
+      if (window.location.pathname === '/' && gameCode) {
+        Toast.show('Game not found. Please check the game code.', 'danger');
+      }
+    }, 100);
   }
 });
