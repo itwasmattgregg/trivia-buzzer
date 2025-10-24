@@ -705,6 +705,15 @@ label {
     margin-right: var(--space-md);
   }
 
+  /* Remove horizontal padding from glass cards containing features and steps */
+  .glass-card:has(.features-grid),
+  .glass-card:has(.steps) {
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
   .hero-title {
     font-size: 2.5rem;
   }
