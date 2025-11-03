@@ -2,10 +2,7 @@ import Config
 
 # Configure your database
 config :trivia_buzzer, TriviaBuzzer.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "triviabuzzer_dev",
+  database: "priv/dev.db",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10

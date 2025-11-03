@@ -6,7 +6,7 @@ Before running this Phoenix application, you need to install:
 
 1. **Elixir** (version 1.12 or later)
 2. **Erlang/OTP** (version 24 or later)
-3. **PostgreSQL** (for the database)
+3. **SQLite** (database will be created automatically)
 
 ### Installing Elixir and Erlang
 
@@ -30,20 +30,22 @@ sudo apt-get install elixir
 #### On Windows:
 Download and install from the official Elixir website: https://elixir-lang.org/install.html
 
-### Installing PostgreSQL
+### Installing SQLite
 
-#### On macOS (using Homebrew):
+SQLite is usually pre-installed on most systems. If not:
+
+#### On macOS:
 ```bash
-brew install postgresql
-brew services start postgresql
+brew install sqlite
 ```
 
 #### On Ubuntu/Debian:
 ```bash
-sudo apt-get install postgresql postgresql-contrib
-sudo systemctl start postgresql
-sudo systemctl enable postgresql
+sudo apt-get install sqlite3 libsqlite3-dev
 ```
+
+#### On Windows:
+SQLite comes bundled with Erlang/OTP, no separate installation needed.
 
 ## Setup Instructions
 

@@ -5,6 +5,10 @@ kill_signal = "SIGTERM"
 kill_timeout = 5
 processes = []
 
+[mounts]
+  source = "trivia_buzzer_data"
+  destination = "/data"
+
 [deploy]
   release_command = "/app/bin/migrate"
 

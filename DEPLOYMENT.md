@@ -1,37 +1,42 @@
 # Fly.io Deployment Guide
 
-## Issues Fixed
+## Overview
 
-### 1. Database Configuration
-- ✅ **Fixed**: Uncommented database URL configuration in `config/runtime.exs`
-- ✅ **Fixed**: Added proper SSL configuration for production database
-- ✅ **Fixed**: Updated Release module to handle migrations properly
+This app uses SQLite3 with Fly.io persistent volumes for database storage. This provides a cost-effective solution since all data is automatically cleaned up every 24 hours.
 
-### 2. Port Configuration  
-- ✅ **Fixed**: Added `PHX_SERVER=true` environment variable
-- ✅ **Fixed**: App now listens on `0.0.0.0:8080` as required by Fly.io
-- ✅ **Fixed**: Added proper health check endpoint
+## Database Migration: PostgreSQL → SQLite
 
-### 3. Application Stability
-- ✅ **Fixed**: Added proper database migration handling
-- ✅ **Fixed**: Added health check endpoint at `/health`
-- ✅ **Fixed**: Improved error handling in Release module
+The app has been migrated from PostgreSQL to SQLite3 for reduced hosting costs:
+
+- **Development**: SQLite database at `priv/dev.db`
+- **Test**: SQLite database at `priv/test*.db`
+- **Production**: SQLite database at `/data/trivia_buzzer.db` (on Fly.io volume)
 
 ## Deployment Steps
 
-### 1. Set Environment Variables
+### 1. Create Persistent Volume
+
+SQLite requires persistent storage. Create a volume first:
+
+```bash
+# Create a 1GB volume for the SQLite database
+fly volumes create trivia_buzzer_data --size 1
+```
+
+### 2. Set Environment Variables
+
 ```bash
 # Generate a secret key
 mix phx.gen.secret
 
 # Set the secret key (replace with your generated key)
 fly secrets set SECRET_KEY_BASE="your_secret_key_here"
-
-# Set database URL (Fly.io will provide this)
-fly secrets set DATABASE_URL="your_database_url_here"
 ```
 
-### 2. Deploy the Application
+**Note**: Unlike PostgreSQL deployments, no `DATABASE_URL` is needed since SQLite uses a local file.
+
+### 3. Deploy the Application
+
 ```bash
 # Deploy to Fly.io
 fly deploy
@@ -43,83 +48,107 @@ fly status
 fly logs
 ```
 
-### 3. Verify Deployment
+### 4. Verify Deployment
+
 - Visit your app URL: `https://triviabuzzer.fly.dev`
 - Check health endpoint: `https://triviabuzzer.fly.dev/health`
 - Test creating a game and joining as a player
 
-## Key Changes Made
+## Key Configuration
 
 ### Database Configuration (`config/runtime.exs`)
+
 ```elixir
-# Before (commented out - caused crashes)
-# database_url = System.get_env("DATABASE_URL") || raise "..."
-
-# After (active configuration)
-database_url = System.get_env("DATABASE_URL") || raise "..."
-
-config :trivia_buzzer, TriviaBuzzer.Repo,
-  ssl: true,
-  url: database_url,
-  pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
-```
-
-### Release Module (`lib/triviaBuzzer/release.ex`)
-```elixir
-# Added proper migration handling
-def migrate do
-  load_app()
-  for repo <- repos() do
-    {:ok, _, _} = Ecto.Migrator.with_repo(repo, &Ecto.Migrator.run(&1, :up, all: true))
-  end
-end
-```
-
-### Health Check (`lib/triviaBuzzer_web/controllers/health_controller.ex`)
-```elixir
-def index(conn, _params) do
-  json(conn, %{status: "ok", timestamp: DateTime.utc_now()})
+if config_env() == :prod do
+  # Configure SQLite database path
+  # Uses /data directory which will be mounted as a Fly.io volume
+  config :trivia_buzzer, TriviaBuzzer.Repo,
+    database: "/data/trivia_buzzer.db",
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
 end
 ```
 
 ### Fly.io Configuration (`fly.toml`)
+
 ```toml
+[mounts]
+  source = "trivia_buzzer_data"
+  destination = "/data"
+
 [env]
   PHX_HOST = "triviabuzzer.fly.dev"
   PORT = "8080"
-  PHX_SERVER = "true"  # Added this
+  PHX_SERVER = "true"
 
-[[services]]
-  http_checks = [
-    {
-      grace_period = "10s",
-      interval = "30s", 
-      method = "GET",
-      timeout = "5s",
-      path = "/health",  # Health check endpoint
-      protocol = "http"
-    }
-  ]
+[deploy]
+  release_command = "/app/bin/migrate"
 ```
+
+## Cleanup Scheduler
+
+The app includes a cleanup scheduler that runs every hour to delete games older than 24 hours. This ensures the SQLite database stays manageable and keeps hosting costs low:
+
+- Cleanup runs via `TriviaBuzzer.Scheduler.CleanupScheduler`
+- Deletes old games and all associated players, teams, and team memberships
+- Foreign keys ensure proper cascade deletion
 
 ## Troubleshooting
 
-### If the app still restarts:
+### If the app fails to start:
+
 1. **Check logs**: `fly logs`
-2. **Verify database connection**: Ensure `DATABASE_URL` is set correctly
+2. **Verify volume is attached**: `fly volumes list`
 3. **Check environment variables**: `fly secrets list`
 4. **Test locally**: Run `MIX_ENV=prod mix phx.server` to test production config
 
 ### Common Issues:
-- **Database not accessible**: Check `DATABASE_URL` format
+
+- **Database file permissions**: Ensure the `/data` directory is writable
+- **Volume not mounted**: Verify volume exists with `fly volumes list`
 - **Port binding issues**: Ensure `PHX_SERVER=true` is set
-- **Memory issues**: Check Fly.io machine size and resource limits
-- **Migration failures**: Check database permissions and connectivity
+- **Migration failures**: Check logs for SQLite-specific errors
+
+### Viewing Database Content
+
+```bash
+# SSH into the Fly.io machine
+fly ssh console
+
+# Access the SQLite database
+sqlite3 /data/trivia_buzzer.db
+
+# Run SQL commands
+SELECT * FROM games;
+.quit
+```
 
 ## Monitoring
 
 - **Health endpoint**: `https://triviabuzzer.fly.dev/health`
 - **Fly.io dashboard**: Monitor machine status and logs
-- **Database**: Check connection and query performance
+- **Volume usage**: Check volume size with `fly volumes list`
+- **Database stats**: The cleanup scheduler logs game statistics
 
-The app should now deploy successfully without the restart issues! 🚀
+## Backup Considerations
+
+Since data is cleaned up after 24 hours, backups are typically not necessary. However, if you need to backup the SQLite database:
+
+```bash
+# SSH into machine and copy database
+fly ssh console
+cp /data/trivia_buzzer.db /data/backup.db
+exit
+
+# Or use fly volumes to create a snapshot
+# (if supported by Fly.io)
+```
+
+## Advantages of SQLite
+
+- **Zero-cost database**: No managed database service fees
+- **Simpler deployment**: No external database connections
+- **Perfect fit**: Single-instance writes, automatic cleanup, moderate traffic
+- **Persistent storage**: Fly.io volumes provide durability across restarts
+- **Easy debugging**: Single-file database is easy to inspect and understand
+
+The app should now deploy successfully with reduced hosting costs! 🚀

@@ -15,7 +15,7 @@ A Phoenix LiveView application for running online trivia games with real-time bu
 
 ## Quick Start
 
-1. **Install Elixir and PostgreSQL** (see SETUP.md for detailed instructions)
+1. **Install Elixir and SQLite** (see SETUP.md for detailed instructions)
 2. **Setup the app:**
    ```bash
    mix deps.get

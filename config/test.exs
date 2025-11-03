@@ -6,10 +6,7 @@ import Config
 # to provide built-in test partitioning in CI environment.
 # Run `mix help test` for more information.
 config :trivia_buzzer, TriviaBuzzer.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "triviabuzzer_test#{System.get_env("MIX_TEST_PARTITION")}",
+  database: "priv/test#{System.get_env("MIX_TEST_PARTITION")}.db",
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 10
 
