@@ -35,8 +35,8 @@ defmodule TriviaBuzzer.MixProject do
     [
       {:phoenix, "~> 1.6.15"},
       {:phoenix_ecto, "~> 4.4"},
-      {:ecto_sql, "~> 3.6"},
-      {:ecto_sqlite3, "~> 0.12"},
+      {:ecto_sql, "~> 3.11"},
+      {:ecto_sqlite3, "~> 0.22"},
       {:phoenix_html, "~> 3.0"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:phoenix_live_view, "~> 0.17.5"},
