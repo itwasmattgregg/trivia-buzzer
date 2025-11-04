@@ -23,9 +23,15 @@ end
 if config_env() == :prod do
   # Configure SQLite database path
   # Uses /data directory which will be mounted as a Fly.io volume
+  # The volume mount creates the directory automatically - we don't need to create it
+  database_path = "/data/trivia_buzzer.db"
+  
   config :trivia_buzzer, TriviaBuzzer.Repo,
-    database: "/data/trivia_buzzer.db",
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
+    database: database_path,
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "5"),
+    queue_target: 5_000,
+    queue_interval: 1_000,
+    timeout: 30_000
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you

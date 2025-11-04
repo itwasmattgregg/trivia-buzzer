@@ -17,7 +17,7 @@ ARG OTP_VERSION=25.1.1
 ARG DEBIAN_VERSION=bullseye-20220801-slim
 
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
-ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
+ARG RUNNER_IMAGE=${BUILDER_IMAGE}
 
 FROM ${BUILDER_IMAGE} as builder
 
@@ -68,6 +68,7 @@ RUN mix release
 # the compiled release and other runtime necessities
 FROM ${RUNNER_IMAGE}
 
+# Install only runtime dependencies (builder image already has most things)
 RUN apt-get update -y && apt-get install -y libstdc++6 openssl libncurses5 locales \
   && apt-get clean && rm -f /var/lib/apt/lists/*_*
 
@@ -87,7 +88,13 @@ ENV MIX_ENV="prod"
 # Only copy the final release from the build stage
 COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/trivia_buzzer ./
 
-USER nobody
+# Copy init script
+COPY docker-init.sh /docker-init.sh
+RUN chmod +x /docker-init.sh
+
+# Simple entrypoint: fix permissions, then switch to nobody and run command
+# Note: Container runs as root by default, entrypoint switches to nobody
+ENTRYPOINT ["/bin/sh", "-c", "/docker-init.sh && exec su nobody -s /bin/sh -c 'exec \"$@\"' -- \"$@\""]
 
 CMD ["/app/bin/server"]
 # Appended by flyctl
