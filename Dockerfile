@@ -94,7 +94,7 @@ RUN chmod +x /docker-init.sh
 
 # Simple entrypoint: fix permissions, then switch to nobody and run command
 # Note: Container runs as root by default, entrypoint switches to nobody
-ENTRYPOINT ["/bin/sh", "-c", "/docker-init.sh && exec su nobody -s /bin/sh -c 'exec \"$@\"' -- \"$@\""]
+ENTRYPOINT ["/bin/sh", "/docker-init.sh"]
 
 CMD ["/app/bin/server"]
 # Appended by flyctl
