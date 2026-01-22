@@ -1,25 +1,41 @@
-# Find eligible builder and runner images on Docker Hub. We use Ubuntu/Debian instead of
-# Alpine to avoid DNS resolution issues in production.
-#
-# https://hub.docker.com/r/hexpm/elixir/tags?page=1&name=ubuntu
-# https://hub.docker.com/_/ubuntu?tab=tags
-#
-#
-# This file is based on these images:
-#
-#   - https://hub.docker.com/r/hexpm/elixir/tags - for the build image
-#   - https://hub.docker.com/_/debian?tab=tags&page=1&name=bullseye-20220801-slim - for the release image
-#   - https://pkgs.org/ - resource for finding needed packages
-#   - Ex: hexpm/elixir:1.14.2-erlang-25.1.1-debian-bullseye-20220801-slim
-#
+# Custom base image with Debian Bookworm (for GLIBC 2.33+ support)
+# Uses Erlang Solutions repository for Erlang and pre-built Elixir
 ARG ELIXIR_VERSION=1.14.2
 ARG OTP_VERSION=25.1.1
-ARG DEBIAN_VERSION=bullseye-20220801-slim
+ARG DEBIAN_VERSION=bookworm-slim
 
-ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
-ARG RUNNER_IMAGE=${BUILDER_IMAGE}
+# Build custom base image with Elixir and Erlang on Debian Bookworm
+FROM debian:${DEBIAN_VERSION} as base
 
-FROM ${BUILDER_IMAGE} as builder
+ARG ELIXIR_VERSION
+ARG OTP_VERSION
+
+# Install Erlang from Debian repositories (Bookworm has Erlang 25.x)
+RUN apt-get update -y && apt-get install -y \
+    erlang \
+    erlang-dev \
+    erlang-xmerl \
+    curl \
+    unzip \
+    && apt-get clean && rm -f /var/lib/apt/lists/*_*
+
+# Install Elixir from source (Debian Bookworm doesn't have Elixir packages)
+RUN apt-get update -y && apt-get install -y \
+    make \
+    && cd /tmp \
+    && curl -fSL "https://github.com/elixir-lang/elixir/archive/v${ELIXIR_VERSION}.tar.gz" -o elixir.tar.gz \
+    && tar -xzf elixir.tar.gz \
+    && cd elixir-${ELIXIR_VERSION} \
+    && make install PREFIX=/usr/local \
+    && cd / \
+    && rm -rf /tmp/elixir-${ELIXIR_VERSION} /tmp/elixir.tar.gz \
+    && apt-get purge -y make \
+    && apt-get clean && rm -f /var/lib/apt/lists/*_*
+
+# Verify installations
+RUN erl -version && elixir --version
+
+FROM base as builder
 
 # install build dependencies
 RUN apt-get update -y && apt-get install -y build-essential git \
@@ -66,9 +82,9 @@ RUN mix release
 
 # start a new build stage so that the final image will only contain
 # the compiled release and other runtime necessities
-FROM ${RUNNER_IMAGE}
+FROM base
 
-# Install only runtime dependencies (builder image already has most things)
+# Install only runtime dependencies (base image already has Elixir/Erlang)
 RUN apt-get update -y && apt-get install -y libstdc++6 openssl libncurses5 locales \
   && apt-get clean && rm -f /var/lib/apt/lists/*_*
 

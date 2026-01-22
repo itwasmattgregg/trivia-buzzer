@@ -14,6 +14,13 @@ defmodule TriviaBuzzerWeb.Router do
     plug :accepts, ["json"]
   end
 
+  # Redirect wp-admin attempts to Rick Roll
+  scope "/", TriviaBuzzerWeb do
+    pipe_through :browser
+
+    get "/wp-admin/*path", PageController, :rick_roll
+  end
+
   scope "/", TriviaBuzzerWeb do
     pipe_through :browser
 

@@ -29,7 +29,39 @@ defmodule TriviaBuzzer.Application do
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: TriviaBuzzer.Supervisor]
     
-    Supervisor.start_link(children, opts)
+    result = Supervisor.start_link(children, opts)
+    
+    # Initialize database connection settings after Repo starts
+    # Ensure SQLite uses DELETE journal mode (not WAL) to avoid visibility issues
+    # This is especially important in production where migrations run separately
+    # Also verify that required tables exist
+    spawn(fn ->
+      Process.sleep(500) # Give Repo time to fully start and establish connection
+      try do
+        Ecto.Adapters.SQL.query!(TriviaBuzzer.Repo, "PRAGMA journal_mode = DELETE", [])
+        
+        # Verify critical tables exist
+        case Ecto.Adapters.SQL.query(TriviaBuzzer.Repo, 
+          "SELECT name FROM sqlite_master WHERE type='table' AND name='games'", []) do
+          {:ok, %{rows: [[_name]]}} ->
+            :ok  # Table exists
+          _ ->
+            # Table doesn't exist - log warning
+            require Logger
+            Logger.error("""
+            [CRITICAL] Database table 'games' does not exist!
+            Migrations may not have run successfully.
+            Please run: /app/bin/migrate
+            """)
+        end
+      rescue
+        e ->
+          require Logger
+          Logger.error("Failed to verify database: #{inspect(e)}")
+      end
+    end)
+    
+    result
   end
 
   # Tell Phoenix to update the endpoint configuration

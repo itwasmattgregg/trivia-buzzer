@@ -26,9 +26,13 @@ if config_env() == :prod do
   # The volume mount creates the directory automatically - we don't need to create it
   database_path = "/data/trivia_buzzer.db"
   
+  # SQLite works best with pool_size: 1 due to file locking and connection isolation
+  # Multiple connections can cause visibility issues where tables created by migrations
+  # aren't immediately visible to other connections in the pool
+  # Migrations will disable WAL mode to avoid checkpoint/synchronization issues
   config :trivia_buzzer, TriviaBuzzer.Repo,
     database: database_path,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "5"),
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "1"),
     queue_target: 5_000,
     queue_interval: 1_000,
     timeout: 30_000

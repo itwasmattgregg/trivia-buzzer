@@ -16,4 +16,8 @@ defmodule TriviaBuzzerWeb.PageController do
     |> put_resp_content_type("application/xml")
     |> text(File.read!("priv/static/sitemap.xml"))
   end
+
+  def rick_roll(conn, _params) do
+    redirect(conn, external: "https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+  end
 end
