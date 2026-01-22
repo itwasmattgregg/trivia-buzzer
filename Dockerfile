@@ -11,13 +11,22 @@ ARG ELIXIR_VERSION
 ARG OTP_VERSION
 
 # Install Erlang from Debian repositories (Bookworm has Erlang 25.x)
+# Also install locales and configure UTF-8 to prevent encoding warnings
 RUN apt-get update -y && apt-get install -y \
     erlang \
     erlang-dev \
     erlang-xmerl \
     curl \
     unzip \
+    locales \
+    && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
+    && locale-gen \
     && apt-get clean && rm -f /var/lib/apt/lists/*_*
+
+# Set UTF-8 locale environment variables
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
 
 # Install Elixir from source (Debian Bookworm doesn't have Elixir packages)
 RUN apt-get update -y && apt-get install -y \
