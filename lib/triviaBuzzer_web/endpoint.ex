@@ -45,26 +45,26 @@ defmodule TriviaBuzzerWeb.Endpoint do
 
   plug Plug.MethodOverride
   plug Plug.Head
-  
+
   # Add Content Security Policy that allows Cloudflare Web Analytics
   plug :put_content_security_policy
-  
+
   plug Plug.Session, @session_options
   plug TriviaBuzzerWeb.Router
-end
 
-defp put_content_security_policy(conn, _opts) do
-  csp = [
-    "default-src 'self'",
-    # Allow Cloudflare Web Analytics scripts
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: https:",
-    # Allow connections to Cloudflare analytics endpoints
-    "connect-src 'self' wss: ws: https://cloudflareinsights.com https://*.cloudflareinsights.com",
-    "frame-ancestors 'none'"
-  ] |> Enum.join("; ")
-  
-  Plug.Conn.put_resp_header(conn, "content-security-policy", csp)
+  defp put_content_security_policy(conn, _opts) do
+    csp = [
+      "default-src 'self'",
+      # Allow Cloudflare Web Analytics scripts
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data: https:",
+      # Allow connections to Cloudflare analytics endpoints
+      "connect-src 'self' wss: ws: https://cloudflareinsights.com https://*.cloudflareinsights.com",
+      "frame-ancestors 'none'"
+    ] |> Enum.join("; ")
+
+    Plug.Conn.put_resp_header(conn, "content-security-policy", csp)
+  end
 end
