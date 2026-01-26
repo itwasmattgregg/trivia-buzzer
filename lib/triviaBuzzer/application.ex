@@ -34,9 +34,9 @@ defmodule TriviaBuzzer.Application do
     # Initialize database connection settings after Repo starts
     # Ensure SQLite uses DELETE journal mode (not WAL) to avoid visibility issues
     # This is especially important in production where migrations run separately
-    # Also verify that required tables exist
+    # Also verify that required tables exist and run migrations if needed
     spawn(fn ->
-      Process.sleep(500) # Give Repo time to fully start and establish connection
+      Process.sleep(1000) # Give Repo time to fully start and establish connection
       try do
         Ecto.Adapters.SQL.query!(TriviaBuzzer.Repo, "PRAGMA journal_mode = DELETE", [])
         
@@ -44,15 +44,28 @@ defmodule TriviaBuzzer.Application do
         case Ecto.Adapters.SQL.query(TriviaBuzzer.Repo, 
           "SELECT name FROM sqlite_master WHERE type='table' AND name='games'", []) do
           {:ok, %{rows: [[_name]]}} ->
-            :ok  # Table exists
-          _ ->
-            # Table doesn't exist - log warning
             require Logger
-            Logger.error("""
-            [CRITICAL] Database table 'games' does not exist!
-            Migrations may not have run successfully.
-            Please run: /app/bin/migrate
+            Logger.info("[Database] ✓ 'games' table exists - database is ready")
+          _ ->
+            # Table doesn't exist - try to run migrations automatically
+            require Logger
+            Logger.warn("""
+            [Database] Table 'games' does not exist! Attempting to run migrations automatically...
             """)
+            
+            try do
+              # Run migrations using the Release module
+              TriviaBuzzer.Release.migrate()
+              require Logger
+              Logger.info("[Database] ✓ Migrations completed successfully")
+            rescue
+              migration_error ->
+                require Logger
+                Logger.error("""
+                [CRITICAL] Failed to run migrations automatically: #{inspect(migration_error)}
+                Please run migrations manually: /app/bin/migrate
+                """)
+            end
         end
       rescue
         e ->

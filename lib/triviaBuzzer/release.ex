@@ -8,7 +8,7 @@ defmodule TriviaBuzzer.Release do
   def migrate do
     load_app()
 
-    for repo <- repos() do
+    results = for repo <- repos() do
       # Get database path BEFORE opening connection to avoid WAL lock issues
       database_path = 
         case Application.get_env(:trivia_buzzer, TriviaBuzzer.Repo) do
@@ -115,6 +115,13 @@ defmodule TriviaBuzzer.Release do
           _ -> :ok
         end
       end)
+    end
+    
+    # Return :ok if all migrations succeeded
+    if Enum.all?(results, fn result -> match?({:ok, _, _}, result) end) do
+      :ok
+    else
+      {:error, :migration_failed}
     end
   end
 

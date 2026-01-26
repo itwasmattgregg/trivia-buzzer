@@ -1,3 +1,7 @@
 #!/bin/sh
+set -e
 cd -P -- "$(dirname -- "$0")"
-exec ./trivia_buzzer eval TriviaBuzzer.Release.migrate
+
+# Run migrations - the Release.migrate function will verify tables exist
+# If it fails, it will raise an error and this script will exit with code 1
+./trivia_buzzer eval "TriviaBuzzer.Release.migrate()"
