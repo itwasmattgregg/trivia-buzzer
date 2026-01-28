@@ -85,6 +85,11 @@ defmodule TriviaBuzzerWeb.HomeLive do
             Create instant trivia games with custom codes. Players join with a simple link and buzz in when ready. 
             Perfect for online trivia nights, classroom quizzes, and team building events.
           </p>
+          <div style="margin-top: var(--space-lg);">
+            <a href="/support" class="btn btn-secondary">
+              💚 Support Development
+            </a>
+          </div>
         </div>
       </header>
 

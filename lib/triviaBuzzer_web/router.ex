@@ -19,6 +19,7 @@ defmodule TriviaBuzzerWeb.Router do
     pipe_through :browser
 
     get "/wp-admin/*path", PageController, :rick_roll
+    get "/support", PageController, :support
   end
 
   scope "/", TriviaBuzzerWeb do

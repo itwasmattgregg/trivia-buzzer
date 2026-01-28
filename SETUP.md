@@ -54,10 +54,11 @@ SQLite comes bundled with Erlang/OTP, no separate installation needed.
    mix deps.get
    ```
 
-2. **Set up the database:**
+2. **Set up the database (creates SQLite DB, runs migrations, seeds):**
    ```bash
    mix ecto.setup
    ```
+   This creates `priv/dev.db`, runs migrations, and loads seeds. With SQLite you don't need a separate database server.
 
 3. **Start the Phoenix server:**
    ```bash
@@ -115,13 +116,14 @@ SQLite comes bundled with Erlang/OTP, no separate installation needed.
 
 ### Database Issues:
 ```bash
-# Reset the database
+# Reset the database (drops, creates, migrates, seeds)
 mix ecto.reset
 
-# Or create a new database
+# Or create DB and run migrations only
 mix ecto.create
 mix ecto.migrate
 ```
+The SQLite database lives at `priv/dev.db` (dev) or `priv/test.db` (test). Deleting that file and running `mix ecto.setup` gives you a fresh database.
 
 ### Port Issues:
 If port 4000 is in use, you can change it by setting the PORT environment variable:

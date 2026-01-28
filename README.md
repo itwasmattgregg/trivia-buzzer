@@ -15,14 +15,16 @@ A Phoenix LiveView application for running online trivia games with real-time bu
 
 ## Quick Start
 
-1. **Install Elixir and SQLite** (see SETUP.md for detailed instructions)
-2. **Setup the app:**
+1. **Install Elixir and SQLite** (see SETUP.md for detailed instructions).
+2. **Setup the app** (deps, SQLite DB, migrations, seeds):
    ```bash
    mix deps.get
    mix ecto.setup
    mix phx.server
    ```
 3. **Visit `http://localhost:4000`** to start creating games!
+
+The app uses SQLite. `mix ecto.setup` creates the database, runs migrations, and loads seeds—no separate database server required.
 
 ## How It Works
 

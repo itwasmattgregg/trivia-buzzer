@@ -20,4 +20,8 @@ defmodule TriviaBuzzerWeb.PageController do
   def rick_roll(conn, _params) do
     redirect(conn, external: "https://www.youtube.com/watch?v=dQw4w9WgXcQ")
   end
+
+  def support(conn, _params) do
+    render(conn, "support.html")
+  end
 end

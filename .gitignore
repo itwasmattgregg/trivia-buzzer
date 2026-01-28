@@ -32,3 +32,12 @@ triviaBuzzer-*.tar
 npm-debug.log
 /assets/node_modules/
 
+# SQLite database files (created by mix ecto.setup)
+/priv/dev.db
+/priv/dev.db-journal
+/priv/test*.db
+/priv/test*.db-journal
+/priv/dev.db-shm
+/priv/dev.db-wal
+/priv/test*.db-shm
+/priv/test*.db-wal
