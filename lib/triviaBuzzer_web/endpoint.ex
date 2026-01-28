@@ -60,6 +60,8 @@ defmodule TriviaBuzzerWeb.Endpoint do
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: https:",
+      # Allow embedding Ko-fi widget iframe
+      "frame-src 'self' https://ko-fi.com https://*.ko-fi.com",
       # Allow connections to Cloudflare analytics endpoints
       "connect-src 'self' wss: ws: https://cloudflareinsights.com https://*.cloudflareinsights.com",
       "frame-ancestors 'none'"
